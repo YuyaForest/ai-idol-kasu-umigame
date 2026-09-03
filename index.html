@@ -43,7 +43,7 @@
       <div class="problem-section">
         <div class="section-label">
           <span>SELECT PROBLEM</span>
-          <span style="font-size: 0.7rem; color: var(--primary-pink)">全10問</span>
+          <span style="font-size: 0.7rem; color: var(--primary-pink)">全12問</span>
         </div>
         <div class="problem-list" id="problem-list">
           <!-- JSで動的生成 -->
@@ -77,6 +77,9 @@
         </div>
 
         <div class="header-actions">
+          <button class="btn-pill btn-voice-active" id="btn-voice-toggle" title="カノンの音声読み上げ（Google ja-JP）を切り替え">
+            <span id="voice-toggle-icon">🔊</span> <span id="voice-toggle-text">ボイス: ON</span>
+          </button>
           <button class="btn-pill btn-secondary" id="btn-show-problem" title="問題文をもう一度見る">
             📜 問題文
           </button>
@@ -145,6 +148,6 @@
   </div>
 
   <!-- JavaScript -->
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=12problems"></script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 /**
  * AIアイドル「カノン」のカスのウミガメのスープ アプリケーションスクリプト
- * Chrome Built-in AI (Prompt API) 連携 & シミュレーションフォールバック
+ * Chrome Built-in AI (Prompt API) 連携 & Web Speech API (Google ja-JP-Standard-B 音声合成)
  */
 
-import { PROBLEMS } from './prompts.js';
+import { PROBLEMS } from './prompts.js?v=12problems';
 
 class KasuUmigameApp {
   constructor() {
@@ -15,6 +15,11 @@ class KasuUmigameApp {
     this.isProcessing = false;
     this.hasBuiltInAI = false;
     this.aiEngineType = 'unknown';
+
+    // 音声読み上げ関連
+    this.isVoiceEnabled = true; // デフォルトON
+    this.preferredVoice = null;
+    this.speechSynthesis = window.speechSynthesis || null;
 
     // DOM Elements
     this.dom = {
@@ -32,6 +37,9 @@ class KasuUmigameApp {
       btnShowProblem: document.getElementById('btn-show-problem'),
       btnResetChat: document.getElementById('btn-reset-chat'),
       btnGiveup: document.getElementById('btn-giveup'),
+      btnVoiceToggle: document.getElementById('btn-voice-toggle'),
+      voiceToggleIcon: document.getElementById('voice-toggle-icon'),
+      voiceToggleText: document.getElementById('voice-toggle-text'),
       modal: document.getElementById('celebration-modal'),
       modalTitle: document.getElementById('modal-title'),
       modalSubtitle: document.getElementById('modal-subtitle'),
@@ -45,6 +53,7 @@ class KasuUmigameApp {
   }
 
   async init() {
+    this.initSpeechSynthesis();
     this.renderProblemList();
     this.setupEventListeners();
     await this.detectAndInitAI();
@@ -52,11 +61,116 @@ class KasuUmigameApp {
   }
 
   /**
+   * Web Speech API の音声リスト初期化と ja-JP-Standard-B / Google 日本語 の探索
+   */
+  initSpeechSynthesis() {
+    if (!this.speechSynthesis) return;
+
+    const selectVoice = () => {
+      const voices = this.speechSynthesis.getVoices();
+      if (!voices || voices.length === 0) return;
+
+      // 優先順位: 1. ja-JP-Standard-B 2. ja-JP-Standard-A 3. Google 日本語 4. 日本語女性音声
+      let bestVoice = null;
+
+      // 1. ja-JP-Standard-B / Standard-B
+      bestVoice = voices.find(v => (v.name.includes('Standard-B') || v.name.includes('ja-JP-B') || v.name.includes('ja-JP-Wavenet-B')) && v.lang.startsWith('ja'));
+
+      // 2. ja-JP-Standard-A
+      if (!bestVoice) {
+        bestVoice = voices.find(v => (v.name.includes('Standard-A') || v.name.includes('ja-JP-A') || v.name.includes('ja-JP-Wavenet-A')) && v.lang.startsWith('ja'));
+      }
+
+      // 3. Google 日本語
+      if (!bestVoice) {
+        bestVoice = voices.find(v => v.name.includes('Google') && (v.lang.includes('ja') || v.name.includes('日本語')));
+      }
+
+      // 4. その他の日本語女性音声 (Nanami, Ayumi, Haruka, Kyoko, etc.)
+      if (!bestVoice) {
+        bestVoice = voices.find(v => v.lang.startsWith('ja') && (v.name.includes('Female') || v.name.includes('Nanami') || v.name.includes('Ayumi') || v.name.includes('Kyoko') || v.name.includes('Haruka')));
+      }
+
+      // 5. 任意の日本語音声
+      if (!bestVoice) {
+        bestVoice = voices.find(v => v.lang.startsWith('ja'));
+      }
+
+      if (bestVoice) {
+        this.preferredVoice = bestVoice;
+        console.log(`[TTS] Selected Voice: ${bestVoice.name} (${bestVoice.lang})`);
+      }
+    };
+
+    selectVoice();
+    if (this.speechSynthesis.onvoiceschanged !== undefined) {
+      this.speechSynthesis.onvoiceschanged = selectVoice;
+    }
+  }
+
+  /**
+   * カノンのアイドルボイス発話処理 (Web Speech API)
+   */
+  speakText(rawText) {
+    if (!this.isVoiceEnabled || !this.speechSynthesis) return;
+
+    // 前の発話をキャンセル
+    this.speechSynthesis.cancel();
+
+    // 読み上げテキストのクリーンアップ（マークダウン記号・絵文字などを自然な日本語に）
+    const cleanText = rawText
+      .replace(/^(カノン|AIアイドル・カノン|KANON)\s*[:：]\s*/i, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/【はい(！*|!*)】/g, 'はい！')
+      .replace(/【いいえ(！*|!*)】/g, 'いいえ！')
+      .replace(/【関係ありません(.*?)】/g, '関係ありません！')
+      .replace(/【質問の仕方に問題があるよ】/g, '質問の仕方に問題があるよ！')
+      .replace(/【正解(.*?)】/g, '正解です！')
+      .replace(/[✨💗💖💓🎉⚡🪄👀🧋🎀📸⛄⏱️📜🍕💡🥺🤖💻👗👻✍️🚀]/g, '')
+      .replace(/\n+/g, ' ')
+      .trim();
+
+    if (!cleanText) return;
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'ja-JP';
+    utterance.pitch = 1.25; // アイドルらしく可愛く少し高め
+    utterance.rate = 1.12;  // 元気なテンポ
+
+    if (this.preferredVoice) {
+      utterance.voice = this.preferredVoice;
+    }
+
+    this.speechSynthesis.speak(utterance);
+  }
+
+  /**
+   * 音声読み上げのON/OFF切り替え
+   */
+  toggleVoice() {
+    this.isVoiceEnabled = !this.isVoiceEnabled;
+    if (this.dom.btnVoiceToggle) {
+      if (this.isVoiceEnabled) {
+        this.dom.btnVoiceToggle.className = 'btn-pill btn-voice-active';
+        this.dom.voiceToggleIcon.textContent = '🔊';
+        this.dom.voiceToggleText.textContent = 'ボイス: ON';
+        this.speakText('ボイスをオンにしたよ💗 カノンの声、いっぱい聞いてね！');
+      } else {
+        this.dom.btnVoiceToggle.className = 'btn-pill btn-voice-muted';
+        this.dom.voiceToggleIcon.textContent = '🔈';
+        this.dom.voiceToggleText.textContent = 'ボイス: OFF';
+        if (this.speechSynthesis) {
+          this.speechSynthesis.cancel();
+        }
+      }
+    }
+  }
+
+  /**
    * Chrome Built-in AI (Prompt API) の検出と初期化
    */
   async detectAndInitAI() {
     try {
-      // 1. window.ai.languageModel / window.LanguageModel の確認
       let availability = 'unavailable';
       let LM = null;
 
@@ -118,7 +232,7 @@ class KasuUmigameApp {
   }
 
   /**
-   * サイドバーの問題一覧をレンダリング
+   * サイドバーの問題一覧をレンダリング (5行2列)
    */
   renderProblemList() {
     this.dom.problemList.innerHTML = '';
@@ -158,9 +272,10 @@ class KasuUmigameApp {
     // AIセッション作成
     await this.createAISession(problem);
 
-    // チャット履歴リセット & 初期メッセージ挿入
+    // チャット履歴リセット & 初期メッセージ挿入 & 音声発話
     this.dom.chatMessages.innerHTML = '';
     this.appendMessage('kanon', problem.openingMessage, false);
+    this.speakText(problem.openingMessage);
   }
 
   /**
@@ -178,15 +293,21 @@ class KasuUmigameApp {
       const wrapper = document.createElement('div');
       wrapper.className = 'message-bubble-wrapper';
 
-      const senderLabel = document.createElement('div');
-      senderLabel.className = 'message-sender';
-      senderLabel.textContent = 'AIアイドル・カノン 💖';
+      const senderHeader = document.createElement('div');
+      senderHeader.className = 'message-sender';
+      senderHeader.innerHTML = `AIアイドル・カノン 💖 <button class="bubble-replay-btn" title="このセリフを聴く">🔊 聴く</button>`;
+
+      const replayBtn = senderHeader.querySelector('.bubble-replay-btn');
+      replayBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.speakText(text);
+      });
 
       const bubble = document.createElement('div');
       bubble.className = 'message-bubble';
       bubble.innerHTML = this.formatKanonText(text);
 
-      wrapper.appendChild(senderLabel);
+      wrapper.appendChild(senderHeader);
       wrapper.appendChild(bubble);
       row.appendChild(avatar);
       row.appendChild(wrapper);
@@ -234,6 +355,7 @@ class KasuUmigameApp {
     formatted = formatted.replace(/【はい(！*|!*)】/g, '<span class="tag-yes">【はい】</span>');
     formatted = formatted.replace(/【いいえ(！*|!*)】/g, '<span class="tag-no">【いいえ】</span>');
     formatted = formatted.replace(/【関係ありません(.*?)】/g, '<span class="tag-irrelevant">【関係ありません】</span>');
+    formatted = formatted.replace(/【質問の仕方に問題があるよ】/g, '<span class="tag-irrelevant">【質問の仕方に問題があるよ】</span>');
     formatted = formatted.replace(/【正解(.*?)】/g, '<span class="tag-correct">🎉【正解です！！】</span>');
 
     return formatted;
@@ -311,18 +433,21 @@ class KasuUmigameApp {
             row.innerHTML = `
               <div class="avatar-small"><img src="assets/kanon.jpg" alt="KANON"></div>
               <div class="message-bubble-wrapper">
-                <div class="message-sender">AIアイドル・カノン 💖</div>
+                <div class="message-sender">AIアイドル・カノン 💖 <button class="bubble-replay-btn" title="このセリフを聴く">🔊 聴く</button></div>
                 <div class="message-bubble"></div>
               </div>
             `;
             this.dom.chatMessages.appendChild(row);
             const bubble = row.querySelector('.message-bubble');
+            const replayBtn = row.querySelector('.bubble-replay-btn');
 
             for await (const chunk of stream) {
               kanonResponse += chunk;
               bubble.innerHTML = this.formatKanonText(kanonResponse);
               this.scrollToBottom();
             }
+
+            replayBtn.addEventListener('click', () => this.speakText(kanonResponse));
           } else {
             kanonResponse = await this.currentSession.prompt(text);
             this.removeTypingIndicator();
@@ -341,6 +466,9 @@ class KasuUmigameApp {
         this.removeTypingIndicator();
         this.appendMessage('kanon', kanonResponse);
       }
+
+      // カノンの音声を再生
+      this.speakText(kanonResponse);
 
       // 正解・ギブアップの判定とモーダル演出
       const isCorrect = kanonResponse.includes('正解') || kanonResponse.includes('大正解') || kanonResponse.includes('真相') && !isGiveup && (kanonResponse.includes('【はい】') || kanonResponse.includes('おめでとう'));
@@ -552,6 +680,38 @@ class KasuUmigameApp {
 ピザ屋さんは関係ないの！カノンの可愛いおっちょこちょいミスだよ〜✨`;
         }
         break;
+
+      case 11: // 未確認飛行カノン・スモーク風圧打ち上げ
+        if (q.includes('スモーク') || q.includes('風圧') || q.includes('スカート') || q.includes('パニエ') || q.includes('噴射') || q.includes('ジャンプ') || q.includes('パラシュート')) {
+          return `【はい！！】🚀
+きゃーーっ！大正解だよプロデューサーさんっ！
+スモーク噴射機の真上で大ジャンプしたら、フリルのスカートが風圧をパラシュートみたいに受け止めてロケット発射されちゃったの〜！夜空綺麗だったよ💗`;
+        }
+        if (q.includes('衣装') || q.includes('服') || q.includes('ステージ') || q.includes('機械') || q.includes('飛んだ')) {
+          return `【はい！】✨
+そう！カノンの可愛い衣装とステージの噴射装置が合体技を起こしちゃったの！`;
+        }
+        if (q.includes('事故') || q.includes('火薬') || q.includes('爆発') || q.includes('怪我') || q.includes('ufo')) {
+          return `【いいえ！】
+危ない火薬事故とか宇宙人じゃないよ〜！無事にふんわり戻ってきたもん💗`;
+        }
+        break;
+
+      case 12: // 全員無言テレパシーライブ・イヤホン/Wi-Fi配信
+        if (q.includes('イヤホン') || q.includes('ヘッドホン') || q.includes('配信') || q.includes('bluetooth') || q.includes('wi-fi') || q.includes('wifi') || q.includes('asmr') || q.includes('耳')) {
+          return `【はい！！】🧠
+すごーーい！！大正解っ！！
+スピーカーじゃなくて、会場Wi-Fiでファンのみんなのイヤホンに超高音質ASMR音声を直接送ってたから、会場は無音でもみんなの耳元は爆音ライブだったの〜🎧💗`;
+        }
+        if (q.includes('通信') || q.includes('電波') || q.includes('スマホ') || q.includes('ネット') || q.includes('機械')) {
+          return `【はい！】📱
+うん！最先端の無線通信テクノロジーを使った神演出（？）だったんだよ〜！`;
+        }
+        if (q.includes('催眠') || q.includes('宗教') || q.includes('幻覚') || q.includes('魔法')) {
+          return `【いいえ！】
+オカルトや催眠術じゃないよ〜！純粋なカノンのデジタルライブなの✨`;
+        }
+        break;
     }
 
     // デフォルト応答
@@ -578,6 +738,8 @@ class KasuUmigameApp {
     if (problem.id === 8 && (t.includes('静電気') || t.includes('タイマー') || t.includes('ショート') || t.includes('0秒'))) return true;
     if (problem.id === 9 && (t.includes('qr') || t.includes('コード') || t.includes('振動') || t.includes('ファンクラブ'))) return true;
     if (problem.id === 10 && (t.includes('ピザ') || t.includes('ランチャー') || t.includes('フリスビー') || t.includes('夜食'))) return true;
+    if (problem.id === 11 && (t.includes('スモーク') || t.includes('スカート') || t.includes('風圧') || t.includes('ロケット'))) return true;
+    if (problem.id === 12 && (t.includes('イヤホン') || t.includes('ヘッドホン') || t.includes('asmr') || t.includes('bluetooth') || t.includes('wifi') || t.includes('wi-fi'))) return true;
     return false;
   }
 
@@ -633,6 +795,13 @@ class KasuUmigameApp {
    * 各種イベントリスナーの設定
    */
   setupEventListeners() {
+    // 音声トグルボタン
+    if (this.dom.btnVoiceToggle) {
+      this.dom.btnVoiceToggle.addEventListener('click', () => {
+        this.toggleVoice();
+      });
+    }
+
     // フォーム送信
     this.dom.chatForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -652,7 +821,9 @@ class KasuUmigameApp {
     // 問題文再表示ボタン
     this.dom.btnShowProblem.addEventListener('click', () => {
       const problem = this.problems[this.currentProblemIndex];
-      this.appendMessage('kanon', `**【${problem.title}】**\n\n${problem.question}\n\n質問待ってるよ〜💗`);
+      const text = `**【${problem.title}】**\n\n${problem.question}\n\n質問待ってるよ〜💗`;
+      this.appendMessage('kanon', text);
+      this.speakText(text);
     });
 
     // リセットボタン

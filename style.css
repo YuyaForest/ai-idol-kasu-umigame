@@ -168,7 +168,7 @@ body {
   right: 12px;
   background: transparent; /* 背景色を透明に設定 */
   backdrop-filter: none;
-  border: 1px solid rgba(255, 94, 151, 0.45);
+  border: none; /* 外枠線を完全に非表示 */
   border-radius: var(--radius-md);
   padding: 10px 14px;
   font-size: 0.84rem;
@@ -190,7 +190,7 @@ body {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 6px rgba(255, 94, 151, 0.8);
 }
 
-/* 問題セレクターセクション（5行2列グリッド配置） */
+/* 問題セレクターセクション（6行2列グリッド配置） */
 .problem-section {
   display: flex;
   flex-direction: column;
@@ -390,6 +390,50 @@ body {
 .btn-accent-pink:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(255, 94, 151, 0.5);
+}
+
+/* 音声トグルボタン */
+.btn-voice-active {
+  background: rgba(0, 242, 254, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 242, 254, 0.5);
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+}
+
+.btn-voice-active:hover {
+  background: rgba(0, 242, 254, 0.25);
+  box-shadow: 0 0 16px rgba(0, 242, 254, 0.5);
+}
+
+.btn-voice-muted {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--border-glass);
+}
+
+.btn-voice-muted:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-main);
+}
+
+/* メッセージ内の再生アイコン */
+.bubble-replay-btn {
+  background: none;
+  border: none;
+  color: var(--text-pink);
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  opacity: 0.75;
+}
+
+.bubble-replay-btn:hover {
+  opacity: 1;
+  background: rgba(255, 94, 151, 0.2);
+  transform: scale(1.1);
 }
 
 /* メッセージ履歴スクロールエリア */
