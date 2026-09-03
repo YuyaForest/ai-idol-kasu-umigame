@@ -65,8 +65,8 @@ body {
    サイドバー（カノン立ち絵・プロファイル・問題選択）
    --------------------------------------------------- */
 .sidebar {
-  width: 380px;
-  min-width: 340px;
+  width: 430px;
+  min-width: 380px;
   height: 100%;
   background: var(--bg-card);
   backdrop-filter: blur(20px);
@@ -74,8 +74,8 @@ body {
   border-right: 1px solid var(--border-glass);
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  gap: 20px;
+  padding: 20px;
+  gap: 16px;
   overflow-y: auto;
   z-index: 10;
   box-shadow: var(--shadow-box);
@@ -190,7 +190,7 @@ body {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 6px rgba(255, 94, 151, 0.8);
 }
 
-/* 問題セレクターセクション */
+/* 問題セレクターセクション（5行2列グリッド配置） */
 .problem-section {
   display: flex;
   flex-direction: column;
@@ -199,7 +199,7 @@ body {
 }
 
 .section-label {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -210,8 +210,8 @@ body {
 }
 
 .problem-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 
@@ -219,52 +219,63 @@ body {
   background: var(--bg-glass);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
-  padding: 12px 14px;
+  padding: 9px 10px;
   text-align: left;
   color: var(--text-main);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   transition: all 0.25s ease;
+  min-width: 0; /* flex/grid内でのテキストellipsis用 */
 }
 
 .problem-btn:hover {
   background: var(--bg-card-hover);
   border-color: rgba(255, 94, 151, 0.4);
-  transform: translateX(4px);
+  transform: translateY(-2px);
 }
 
 .problem-btn.active {
-  background: linear-gradient(135deg, rgba(255, 94, 151, 0.2), rgba(121, 82, 255, 0.2));
+  background: linear-gradient(135deg, rgba(255, 94, 151, 0.25), rgba(121, 82, 255, 0.25));
   border-color: var(--primary-pink);
-  box-shadow: 0 0 15px rgba(255, 94, 151, 0.3);
+  box-shadow: 0 0 15px rgba(255, 94, 151, 0.35);
 }
 
 .problem-icon {
-  font-size: 1.3rem;
-  width: 32px;
-  height: 32px;
+  font-size: 1.15rem;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 
 .problem-info {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .problem-name {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
   margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .problem-tag {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
 /* AI接続ステータスバー */
