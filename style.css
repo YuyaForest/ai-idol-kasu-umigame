@@ -1,0 +1,745 @@
+/* ===================================================
+   AIアイドル「カノン」カスのウミガメのスープ スタイルシート
+   Cyber-Idol & Glassmorphism Design System
+   =================================================== */
+
+:root {
+  --primary-pink: #ff5e97;
+  --primary-gradient: linear-gradient(135deg, #ff4181 0%, #ff7eb3 50%, #9055ff 100%);
+  --secondary-purple: #7952ff;
+  --accent-cyan: #00f2fe;
+  --accent-gold: #ffd166;
+  
+  --bg-dark: #0e0d1b;
+  --bg-card: rgba(26, 23, 48, 0.75);
+  --bg-card-hover: rgba(38, 33, 70, 0.85);
+  --bg-glass: rgba(255, 255, 255, 0.06);
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --border-glow: rgba(255, 94, 151, 0.35);
+
+  --text-main: #f8f9fa;
+  --text-muted: #b8b5d0;
+  --text-pink: #ff85b6;
+
+  --user-bubble-bg: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  --kanon-bubble-bg: rgba(255, 94, 151, 0.12);
+  --kanon-bubble-border: rgba(255, 94, 151, 0.3);
+
+  --shadow-glow: 0 0 25px rgba(255, 94, 151, 0.25);
+  --shadow-box: 0 10px 30px rgba(0, 0, 0, 0.4);
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(255, 94, 151, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(121, 82, 255, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(0, 242, 254, 0.05) 0%, transparent 60%);
+}
+
+/* アプリ全体レイアウト */
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------
+   サイドバー（カノン立ち絵・プロファイル・問題選択）
+   --------------------------------------------------- */
+.sidebar {
+  width: 380px;
+  min-width: 340px;
+  height: 100%;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border-glass);
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 20px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: var(--shadow-box);
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-badge {
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 242, 254, 0.12);
+  border: 1px solid rgba(0, 242, 254, 0.4);
+  color: var(--accent-cyan);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent-cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-cyan);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* カノンビジュアルカード */
+.kanon-card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-glow);
+  box-shadow: var(--shadow-glow);
+  background: linear-gradient(180deg, rgba(255, 94, 151, 0.1) 0%, rgba(14, 13, 27, 0.9) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.kanon-img-wrapper {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kanon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 15%;
+  transition: transform 0.5s ease;
+}
+
+.kanon-card:hover .kanon-img {
+  transform: scale(1.05);
+}
+
+.kanon-speech-bubble {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  background: transparent; /* 背景色を透明に設定 */
+  backdrop-filter: none;
+  border: 1px solid rgba(255, 94, 151, 0.45);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.4;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.9);
+  box-shadow: none;
+}
+
+.kanon-speech-bubble::before {
+  content: "💖 KANON VOICE";
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--primary-pink);
+  margin-bottom: 2px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 6px rgba(255, 94, 151, 0.8);
+}
+
+/* 問題セレクターセクション */
+.problem-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.section-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.problem-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.problem-btn {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  text-align: left;
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.25s ease;
+}
+
+.problem-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 94, 151, 0.4);
+  transform: translateX(4px);
+}
+
+.problem-btn.active {
+  background: linear-gradient(135deg, rgba(255, 94, 151, 0.2), rgba(121, 82, 255, 0.2));
+  border-color: var(--primary-pink);
+  box-shadow: 0 0 15px rgba(255, 94, 151, 0.3);
+}
+
+.problem-icon {
+  font-size: 1.3rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+}
+
+.problem-info {
+  flex: 1;
+}
+
+.problem-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.problem-tag {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* AI接続ステータスバー */
+.ai-status-panel {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  border: 1px solid var(--border-glass);
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-muted);
+}
+
+.ai-engine-name {
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------
+   メインチャットエリア
+   --------------------------------------------------- */
+.main-chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  background: rgba(14, 13, 27, 0.4);
+}
+
+/* チャットヘッダー */
+.chat-header {
+  padding: 16px 28px;
+  background: var(--bg-card);
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header-problem-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-problem-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.header-counter {
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-pill {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-secondary {
+  background: var(--bg-glass);
+  color: var(--text-main);
+  border: 1px solid var(--border-glass);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-accent-pink {
+  background: var(--primary-gradient);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(255, 94, 151, 0.35);
+}
+
+.btn-accent-pink:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 94, 151, 0.5);
+}
+
+/* メッセージ履歴スクロールエリア */
+.chat-messages {
+  flex: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.message-row {
+  display: flex;
+  gap: 14px;
+  max-width: 82%;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-row.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.message-row.kanon {
+  align-self: flex-start;
+}
+
+.avatar-small {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-pink);
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(255, 94, 151, 0.3);
+  flex-shrink: 0;
+}
+
+.avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 10%;
+}
+
+.user-avatar-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(108, 92, 231, 0.3);
+}
+
+.message-bubble-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.message-sender {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.message-row.user .message-sender {
+  text-align: right;
+  color: #a29bfe;
+}
+
+.message-row.kanon .message-sender {
+  color: var(--text-pink);
+}
+
+.message-bubble {
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.message-row.user .message-bubble {
+  background: var(--user-bubble-bg);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25);
+}
+
+.message-row.kanon .message-bubble {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--kanon-bubble-border);
+  color: var(--text-main);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* カノンのタグハイライト（【はい】【いいえ】等） */
+.tag-yes {
+  display: inline-block;
+  background: #00b894;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 800;
+  margin-right: 4px;
+}
+
+.tag-no {
+  display: inline-block;
+  background: #d63031;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 800;
+  margin-right: 4px;
+}
+
+.tag-irrelevant {
+  display: inline-block;
+  background: #636e72;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 800;
+  margin-right: 4px;
+}
+
+.tag-correct {
+  display: inline-block;
+  background: var(--primary-gradient);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: 6px;
+  box-shadow: 0 0 15px rgba(255, 94, 151, 0.6);
+}
+
+/* タイピング演出 */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--primary-pink);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ---------------------------------------------------
+   クイック質問チップ & 入力フッター
+   --------------------------------------------------- */
+.chat-footer {
+  padding: 16px 28px 24px;
+  background: var(--bg-card);
+  backdrop-filter: blur(15px);
+  border-top: 1px solid var(--border-glass);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quick-chips-container {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.quick-chips-container::-webkit-scrollbar {
+  display: none;
+}
+
+.chip-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.chip-btn:hover {
+  background: rgba(255, 94, 151, 0.15);
+  border-color: rgba(255, 94, 151, 0.4);
+  color: var(--text-pink);
+  transform: translateY(-1px);
+}
+
+.chip-giveup {
+  border-color: rgba(255, 209, 102, 0.3);
+  color: var(--accent-gold);
+}
+
+.chip-giveup:hover {
+  background: rgba(255, 209, 102, 0.15);
+  border-color: var(--accent-gold);
+  color: #fff;
+}
+
+.input-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.input-field {
+  flex: 1;
+  background: rgba(14, 13, 27, 0.8);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-full);
+  padding: 14px 22px;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.input-field:focus {
+  border-color: var(--primary-pink);
+  box-shadow: 0 0 15px rgba(255, 94, 151, 0.25);
+  background: rgba(20, 18, 38, 0.95);
+}
+
+.input-field::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.send-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 15px rgba(255, 94, 151, 0.4);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.send-btn:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 6px 22px rgba(255, 94, 151, 0.6);
+}
+
+.send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------
+   正解・ギブアップ モーダル演出
+   --------------------------------------------------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 13, 27, 0.85);
+  backdrop-filter: blur(12px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-backdrop.show {
+  display: flex;
+}
+
+.celebration-card {
+  background: linear-gradient(135deg, rgba(38, 33, 70, 0.95), rgba(18, 16, 36, 0.98));
+  border: 2px solid var(--primary-pink);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  max-width: 540px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 0 50px rgba(255, 94, 151, 0.5);
+  position: relative;
+  overflow: hidden;
+  animation: scaleUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.celebration-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+}
+
+.celebration-truth {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin: 16px 0;
+  text-align: left;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  border-left: 4px solid var(--primary-pink);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 900px) {
+  .app-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    max-height: 280px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-glass);
+    padding: 16px;
+  }
+  .kanon-img-wrapper {
+    height: 140px;
+  }
+}

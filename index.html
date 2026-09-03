@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIアイドル「カノン」のカスのウミガメのスープ 💗</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti for Celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- Style -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- サイドバー -->
+    <aside class="sidebar">
+      <div class="brand-header">
+        <h1 class="brand-title">
+          <span>💖</span> AIアイドル・カノン
+        </h1>
+        <div class="status-badge" id="live-badge">
+          <span class="status-dot"></span> LIVE ON
+        </div>
+      </div>
+
+      <!-- カノン アバターカード -->
+      <div class="kanon-card">
+        <div class="kanon-img-wrapper">
+          <img src="assets/kanon.jpg" alt="AI Idol KANON" class="kanon-img" id="kanon-avatar-main">
+        </div>
+        <div class="kanon-speech-bubble" id="kanon-status-voice">
+          「全力わたしのアイドル活動、AIカツ💗 一緒にスープの謎を解き明かそ！」
+        </div>
+      </div>
+
+      <!-- 問題選択リスト -->
+      <div class="problem-section">
+        <div class="section-label">
+          <span>SELECT PROBLEM</span>
+          <span style="font-size: 0.7rem; color: var(--primary-pink)">全10問</span>
+        </div>
+        <div class="problem-list" id="problem-list">
+          <!-- JSで動的生成 -->
+        </div>
+      </div>
+
+      <!-- AI接続ステータス -->
+      <div class="ai-status-panel">
+        <div class="ai-status-header">
+          <span>LLM Engine</span>
+          <span class="ai-engine-name" id="ai-engine-status">Checking...</span>
+        </div>
+        <div style="font-size: 0.68rem; color: var(--text-muted);" id="ai-engine-detail">
+          Chrome Built-in AI Prompt API / Gemini Nano
+        </div>
+      </div>
+    </aside>
+
+    <!-- メインチャットエリア -->
+    <main class="main-chat-area">
+      <!-- チャットヘッダー -->
+      <header class="chat-header">
+        <div class="header-problem-info">
+          <h2 class="header-problem-title" id="current-problem-title">
+            <span>⚡</span> 第1問: 全力わたしのアイドル活動、AIカツ💗
+          </h2>
+          <div class="header-meta">
+            <span>モード: <strong style="color: var(--text-pink)">カスのウミガメ</strong></span>
+            <span>質問回数: <span class="header-counter" id="question-counter">0</span> 回</span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn-pill btn-secondary" id="btn-show-problem" title="問題文をもう一度見る">
+            📜 問題文
+          </button>
+          <button class="btn-pill btn-secondary" id="btn-reset-chat" title="この問題をリセット">
+            🔄 やり直す
+          </button>
+          <button class="btn-pill btn-accent-pink" id="btn-giveup" title="カノンの理不尽な真相を聞く">
+            🏳️ ギブアップ
+          </button>
+        </div>
+      </header>
+
+      <!-- メッセージスクロール領域 -->
+      <div class="chat-messages" id="chat-messages">
+        <!-- JSで初期メッセージおよび対話をレンダリング -->
+      </div>
+
+      <!-- フッター（クイックチップ＆入力バー） -->
+      <footer class="chat-footer">
+        <div class="quick-chips-container" id="quick-chips">
+          <button class="chip-btn" data-query="カノンの体に何か原因がありますか？">🤔 カノン自身に原因？</button>
+          <button class="chip-btn" data-query="物理的なトラブルや物が関係していますか？">📦 物理的なトラブル？</button>
+          <button class="chip-btn" data-query="機械や電気、AIのバグですか？">⚡ 電気やAIのバグ？</button>
+          <button class="chip-btn" data-query="ファンや他のお客さんは関係ありますか？">👥 ファンが関係？</button>
+          <button class="chip-btn chip-giveup" data-query="ギブアップです！カノンちゃん、カスの真相を教えて！">🏳️ カスの真相を教えて！</button>
+        </div>
+
+        <form class="input-bar" id="chat-form">
+          <input 
+            type="text" 
+            class="input-field" 
+            id="chat-input" 
+            placeholder="カノンに「はい」「いいえ」で答えられる質問をしてね💗（例：照明が落ちたのは事故ですか？）" 
+            autocomplete="off"
+          />
+          <button type="submit" class="send-btn" id="send-btn" aria-label="送信">
+            🚀
+          </button>
+        </form>
+      </footer>
+    </main>
+  </div>
+
+  <!-- 正解 / ギブアップ 真相発表モーダル -->
+  <div class="modal-backdrop" id="celebration-modal">
+    <div class="celebration-card">
+      <div style="font-size: 3rem; margin-bottom: 8px;" id="modal-emoji">🎉</div>
+      <h3 class="celebration-title" id="modal-title">真相解明おめでとうっ💗</h3>
+      <p style="font-size: 0.88rem; color: var(--text-muted);" id="modal-subtitle">
+        カノンの理不尽なカスのウミガメのオチはこちら！
+      </p>
+      
+      <div class="celebration-truth" id="modal-truth-text">
+        <!-- 真相テキスト -->
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 12px; margin-top: 20px;">
+        <button class="btn-pill btn-secondary" id="modal-close-btn">
+          チャットに戻る
+        </button>
+        <button class="btn-pill btn-accent-pink" id="modal-next-btn">
+          次の問題へ進む 🚀
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
