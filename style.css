@@ -392,48 +392,86 @@ body {
   box-shadow: 0 6px 20px rgba(255, 94, 151, 0.5);
 }
 
-/* 音声トグルボタン */
-.btn-voice-active {
-  background: rgba(0, 242, 254, 0.15);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(0, 242, 254, 0.5);
-  box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+/* 🎵 KANONソング プレイヤー */
+.music-player-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 94, 151, 0.08);
+  border: 1px solid rgba(255, 94, 151, 0.25);
+  border-radius: var(--radius-full);
+  padding: 3px 12px 3px 4px;
+  box-shadow: 0 0 15px rgba(255, 94, 151, 0.15);
+  transition: all 0.3s ease;
 }
 
-.btn-voice-active:hover {
-  background: rgba(0, 242, 254, 0.25);
-  box-shadow: 0 0 16px rgba(0, 242, 254, 0.5);
+.music-player-panel:hover {
+  background: rgba(255, 94, 151, 0.15);
+  border-color: rgba(255, 94, 151, 0.45);
+  box-shadow: 0 0 20px rgba(255, 94, 151, 0.3);
 }
 
-.btn-voice-muted {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-muted);
-  border: 1px solid var(--border-glass);
-}
-
-.btn-voice-muted:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--text-main);
-}
-
-/* メッセージ内の再生アイコン */
-.bubble-replay-btn {
-  background: none;
+.btn-music-toggle {
+  background: var(--primary-gradient);
+  color: #fff;
   border: none;
-  color: var(--text-pink);
-  font-size: 0.8rem;
-  cursor: pointer;
-  margin-left: 6px;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-  opacity: 0.75;
+  box-shadow: 0 2px 10px rgba(255, 94, 151, 0.4);
 }
 
-.bubble-replay-btn:hover {
-  opacity: 1;
-  background: rgba(255, 94, 151, 0.2);
-  transform: scale(1.1);
+.btn-music-playing {
+  background: linear-gradient(135deg, #00f2fe, #4facfe);
+  color: #0b0d19;
+  font-weight: 800;
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.btn-music-muted {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  box-shadow: none;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 242, 254, 0.8);
+  }
+}
+
+.music-info-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 200px;
+  overflow: hidden;
+}
+
+.music-note-anim {
+  font-size: 0.85rem;
+  display: inline-block;
+  animation: bounceNote 1.5s infinite ease-in-out;
+}
+
+@keyframes bounceNote {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(12deg);
+  }
+}
+
+.music-title-text {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-pink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.2px;
 }
 
 /* メッセージ履歴スクロールエリア */

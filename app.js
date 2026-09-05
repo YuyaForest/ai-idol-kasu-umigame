@@ -1,9 +1,9 @@
 /**
  * AIアイドル「カノン」のカスのウミガメのスープ アプリケーションスクリプト
- * Chrome Built-in AI (Prompt API) 連携 & Web Speech API (Google ja-JP-Standard-B 音声合成)
+ * Chrome Built-in AI (Prompt API) 連携 & KANONオリジナル楽曲（MP3 BGMプレイヤー）
  */
 
-import { PROBLEMS } from './prompts.js?v=12problems';
+import { PROBLEMS } from './prompts.js?v=music_update_12';
 
 class KasuUmigameApp {
   constructor() {
@@ -16,10 +16,9 @@ class KasuUmigameApp {
     this.hasBuiltInAI = false;
     this.aiEngineType = 'unknown';
 
-    // 音声読み上げ関連
-    this.isVoiceEnabled = true; // デフォルトON
-    this.preferredVoice = null;
-    this.speechSynthesis = window.speechSynthesis || null;
+    // 🎵 KANONソング（BGM）プレイヤー関連
+    this.isMusicPlaying = false;
+    this.userHasInteracted = false;
 
     // DOM Elements
     this.dom = {
@@ -37,9 +36,14 @@ class KasuUmigameApp {
       btnShowProblem: document.getElementById('btn-show-problem'),
       btnResetChat: document.getElementById('btn-reset-chat'),
       btnGiveup: document.getElementById('btn-giveup'),
-      btnVoiceToggle: document.getElementById('btn-voice-toggle'),
-      voiceToggleIcon: document.getElementById('voice-toggle-icon'),
-      voiceToggleText: document.getElementById('voice-toggle-text'),
+      // ミュージックプレイヤー
+      bgmPlayer: document.getElementById('kanon-bgm-player'),
+      btnMusicToggle: document.getElementById('btn-music-toggle'),
+      musicToggleIcon: document.getElementById('music-toggle-icon'),
+      musicToggleText: document.getElementById('music-toggle-text'),
+      currentSongTitle: document.getElementById('current-song-title'),
+      musicInfoPill: document.getElementById('music-info-pill'),
+      // モーダル
       modal: document.getElementById('celebration-modal'),
       modalTitle: document.getElementById('modal-title'),
       modalSubtitle: document.getElementById('modal-subtitle'),
@@ -53,116 +57,108 @@ class KasuUmigameApp {
   }
 
   async init() {
-    this.initSpeechSynthesis();
+    this.initMusicPlayer();
     this.renderProblemList();
     this.setupEventListeners();
     await this.detectAndInitAI();
-    this.loadProblem(0);
+    this.loadProblem(0, false);
   }
 
   /**
-   * Web Speech API の音声リスト初期化と ja-JP-Standard-B / Google 日本語 の探索
+   * 🎵 KANONソング（MP3）プレイヤーの初期設定
    */
-  initSpeechSynthesis() {
-    if (!this.speechSynthesis) return;
+  initMusicPlayer() {
+    if (!this.dom.bgmPlayer) return;
 
-    const selectVoice = () => {
-      const voices = this.speechSynthesis.getVoices();
-      if (!voices || voices.length === 0) return;
+    this.dom.bgmPlayer.volume = 0.55; // 心地よいBGM音量に設定
 
-      // 優先順位: 1. ja-JP-Standard-B 2. ja-JP-Standard-A 3. Google 日本語 4. 日本語女性音声
-      let bestVoice = null;
+    // 再生状態イベント監視
+    this.dom.bgmPlayer.addEventListener('play', () => {
+      this.isMusicPlaying = true;
+      this.updateMusicUI(true);
+    });
 
-      // 1. ja-JP-Standard-B / Standard-B
-      bestVoice = voices.find(v => (v.name.includes('Standard-B') || v.name.includes('ja-JP-B') || v.name.includes('ja-JP-Wavenet-B')) && v.lang.startsWith('ja'));
+    this.dom.bgmPlayer.addEventListener('pause', () => {
+      this.isMusicPlaying = false;
+      this.updateMusicUI(false);
+    });
 
-      // 2. ja-JP-Standard-A
-      if (!bestVoice) {
-        bestVoice = voices.find(v => (v.name.includes('Standard-A') || v.name.includes('ja-JP-A') || v.name.includes('ja-JP-Wavenet-A')) && v.lang.startsWith('ja'));
+    this.dom.bgmPlayer.addEventListener('ended', () => {
+      // loop属性でループしますが、念のため再スタート
+      this.dom.bgmPlayer.currentTime = 0;
+      this.dom.bgmPlayer.play().catch(() => {});
+    });
+  }
+
+  /**
+   * 問題に対応したMP3楽曲をロード＆再生
+   */
+  async loadProblemMusic(problem, shouldPlay = true) {
+    if (!this.dom.bgmPlayer || !problem.songFile) return;
+
+    // 曲名表示を更新
+    if (this.dom.currentSongTitle) {
+      this.dom.currentSongTitle.textContent = problem.songTitle || `問題${problem.id}のヒントソング`;
+      this.dom.currentSongTitle.title = `${problem.title} のヒントソング♪`;
+    }
+
+    const currentSrc = this.dom.bgmPlayer.getAttribute('src');
+    if (currentSrc !== problem.songFile) {
+      this.dom.bgmPlayer.src = problem.songFile;
+      this.dom.bgmPlayer.load();
+    }
+
+    // ユーザー操作後、または再生フラグが立っている場合は再生
+    if (shouldPlay && (this.userHasInteracted || this.isMusicPlaying)) {
+      try {
+        await this.dom.bgmPlayer.play();
+        this.isMusicPlaying = true;
+        this.updateMusicUI(true);
+      } catch (err) {
+        // ブラウザの自動再生ポリシーによるブロック時はUIのみミュート表示
+        console.log('[Music] Autoplay waiting for user gesture:', err.message);
+        this.isMusicPlaying = false;
+        this.updateMusicUI(false);
       }
-
-      // 3. Google 日本語
-      if (!bestVoice) {
-        bestVoice = voices.find(v => v.name.includes('Google') && (v.lang.includes('ja') || v.name.includes('日本語')));
-      }
-
-      // 4. その他の日本語女性音声 (Nanami, Ayumi, Haruka, Kyoko, etc.)
-      if (!bestVoice) {
-        bestVoice = voices.find(v => v.lang.startsWith('ja') && (v.name.includes('Female') || v.name.includes('Nanami') || v.name.includes('Ayumi') || v.name.includes('Kyoko') || v.name.includes('Haruka')));
-      }
-
-      // 5. 任意の日本語音声
-      if (!bestVoice) {
-        bestVoice = voices.find(v => v.lang.startsWith('ja'));
-      }
-
-      if (bestVoice) {
-        this.preferredVoice = bestVoice;
-        console.log(`[TTS] Selected Voice: ${bestVoice.name} (${bestVoice.lang})`);
-      }
-    };
-
-    selectVoice();
-    if (this.speechSynthesis.onvoiceschanged !== undefined) {
-      this.speechSynthesis.onvoiceschanged = selectVoice;
     }
   }
 
   /**
-   * カノンのアイドルボイス発話処理 (Web Speech API)
+   * 音楽の再生 / 一時停止トグル
    */
-  speakText(rawText) {
-    if (!this.isVoiceEnabled || !this.speechSynthesis) return;
+  async toggleMusic() {
+    this.userHasInteracted = true;
+    if (!this.dom.bgmPlayer) return;
 
-    // 前の発話をキャンセル
-    this.speechSynthesis.cancel();
-
-    // 読み上げテキストのクリーンアップ（マークダウン記号・絵文字などを自然な日本語に）
-    const cleanText = rawText
-      .replace(/^(カノン|AIアイドル・カノン|KANON)\s*[:：]\s*/i, '')
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/【はい(！*|!*)】/g, 'はい！')
-      .replace(/【いいえ(！*|!*)】/g, 'いいえ！')
-      .replace(/【関係ありません(.*?)】/g, '関係ありません！')
-      .replace(/【質問の仕方に問題があるよ】/g, '質問の仕方に問題があるよ！')
-      .replace(/【正解(.*?)】/g, '正解です！')
-      .replace(/[✨💗💖💓🎉⚡🪄👀🧋🎀📸⛄⏱️📜🍕💡🥺🤖💻👗👻✍️🚀]/g, '')
-      .replace(/\n+/g, ' ')
-      .trim();
-
-    if (!cleanText) return;
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = 'ja-JP';
-    utterance.pitch = 1.25; // アイドルらしく可愛く少し高め
-    utterance.rate = 1.12;  // 元気なテンポ
-
-    if (this.preferredVoice) {
-      utterance.voice = this.preferredVoice;
+    if (this.isMusicPlaying) {
+      this.dom.bgmPlayer.pause();
+    } else {
+      try {
+        await this.dom.bgmPlayer.play();
+        this.isMusicPlaying = true;
+        this.updateMusicUI(true);
+      } catch (err) {
+        console.warn('Failed to play audio:', err);
+      }
     }
-
-    this.speechSynthesis.speak(utterance);
   }
 
   /**
-   * 音声読み上げのON/OFF切り替え
+   * 音楽ボタンとパネルのUI更新
    */
-  toggleVoice() {
-    this.isVoiceEnabled = !this.isVoiceEnabled;
-    if (this.dom.btnVoiceToggle) {
-      if (this.isVoiceEnabled) {
-        this.dom.btnVoiceToggle.className = 'btn-pill btn-voice-active';
-        this.dom.voiceToggleIcon.textContent = '🔊';
-        this.dom.voiceToggleText.textContent = 'ボイス: ON';
-        this.speakText('ボイスをオンにしたよ💗 カノンの声、いっぱい聞いてね！');
-      } else {
-        this.dom.btnVoiceToggle.className = 'btn-pill btn-voice-muted';
-        this.dom.voiceToggleIcon.textContent = '🔈';
-        this.dom.voiceToggleText.textContent = 'ボイス: OFF';
-        if (this.speechSynthesis) {
-          this.speechSynthesis.cancel();
-        }
-      }
+  updateMusicUI(isPlaying) {
+    if (!this.dom.btnMusicToggle) return;
+
+    if (isPlaying) {
+      this.dom.btnMusicToggle.className = 'btn-pill btn-music-toggle btn-music-playing';
+      if (this.dom.musicToggleIcon) this.dom.musicToggleIcon.textContent = '⏸️';
+      if (this.dom.musicToggleText) this.dom.musicToggleText.textContent = 'BGM: ON';
+      if (this.dom.musicInfoPill) this.dom.musicInfoPill.style.opacity = '1';
+    } else {
+      this.dom.btnMusicToggle.className = 'btn-pill btn-music-toggle btn-music-muted';
+      if (this.dom.musicToggleIcon) this.dom.musicToggleIcon.textContent = '▶️';
+      if (this.dom.musicToggleText) this.dom.musicToggleText.textContent = 'BGM: OFF';
+      if (this.dom.musicInfoPill) this.dom.musicInfoPill.style.opacity = '0.7';
     }
   }
 
@@ -232,7 +228,7 @@ class KasuUmigameApp {
   }
 
   /**
-   * サイドバーの問題一覧をレンダリング (5行2列)
+   * サイドバーの問題一覧をレンダリング (6行2列)
    */
   renderProblemList() {
     this.dom.problemList.innerHTML = '';
@@ -248,7 +244,8 @@ class KasuUmigameApp {
       `;
       btn.addEventListener('click', () => {
         if (this.isProcessing) return;
-        this.loadProblem(idx);
+        this.userHasInteracted = true;
+        this.loadProblem(idx, this.isMusicPlaying);
       });
       this.dom.problemList.appendChild(btn);
     });
@@ -257,7 +254,7 @@ class KasuUmigameApp {
   /**
    * 指定したインデックスの問題を読み込み初期化
    */
-  async loadProblem(index) {
+  async loadProblem(index, playMusic = true) {
     this.currentProblemIndex = index;
     const problem = this.problems[index];
     this.questionCount = 0;
@@ -269,13 +266,15 @@ class KasuUmigameApp {
     this.dom.voiceBubble.textContent = `「${problem.title}」だよ！プロデューサーさん、推理してみてね💗`;
     this.renderProblemList();
 
+    // 🎵 対応するMP3音楽（BGM）をロード＆再生
+    await this.loadProblemMusic(problem, playMusic);
+
     // AIセッション作成
     await this.createAISession(problem);
 
-    // チャット履歴リセット & 初期メッセージ挿入 & 音声発話
+    // チャット履歴リセット & 初期メッセージ挿入
     this.dom.chatMessages.innerHTML = '';
     this.appendMessage('kanon', problem.openingMessage, false);
-    this.speakText(problem.openingMessage);
   }
 
   /**
@@ -295,13 +294,7 @@ class KasuUmigameApp {
 
       const senderHeader = document.createElement('div');
       senderHeader.className = 'message-sender';
-      senderHeader.innerHTML = `AIアイドル・カノン 💖 <button class="bubble-replay-btn" title="このセリフを聴く">🔊 聴く</button>`;
-
-      const replayBtn = senderHeader.querySelector('.bubble-replay-btn');
-      replayBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.speakText(text);
-      });
+      senderHeader.innerHTML = `AIアイドル・カノン 💖`;
 
       const bubble = document.createElement('div');
       bubble.className = 'message-bubble';
@@ -324,7 +317,6 @@ class KasuUmigameApp {
       senderLabel.textContent = 'プロデューサー';
 
       const bubble = document.createElement('div');
-      bubble.className = 'message-bubble';
       bubble.textContent = text;
 
       wrapper.appendChild(senderLabel);
@@ -402,6 +394,7 @@ class KasuUmigameApp {
   async handleSendMessage(userText) {
     if (!userText || !userText.trim() || this.isProcessing) return;
 
+    this.userHasInteracted = true;
     const text = userText.trim();
     this.dom.chatInput.value = '';
     this.isProcessing = true;
@@ -433,21 +426,18 @@ class KasuUmigameApp {
             row.innerHTML = `
               <div class="avatar-small"><img src="assets/kanon.jpg" alt="KANON"></div>
               <div class="message-bubble-wrapper">
-                <div class="message-sender">AIアイドル・カノン 💖 <button class="bubble-replay-btn" title="このセリフを聴く">🔊 聴く</button></div>
+                <div class="message-sender">AIアイドル・カノン 💖</div>
                 <div class="message-bubble"></div>
               </div>
             `;
             this.dom.chatMessages.appendChild(row);
             const bubble = row.querySelector('.message-bubble');
-            const replayBtn = row.querySelector('.bubble-replay-btn');
 
             for await (const chunk of stream) {
               kanonResponse += chunk;
               bubble.innerHTML = this.formatKanonText(kanonResponse);
               this.scrollToBottom();
             }
-
-            replayBtn.addEventListener('click', () => this.speakText(kanonResponse));
           } else {
             kanonResponse = await this.currentSession.prompt(text);
             this.removeTypingIndicator();
@@ -467,11 +457,8 @@ class KasuUmigameApp {
         this.appendMessage('kanon', kanonResponse);
       }
 
-      // カノンの音声を再生
-      this.speakText(kanonResponse);
-
       // 正解・ギブアップの判定とモーダル演出
-      const isCorrect = kanonResponse.includes('正解') || kanonResponse.includes('大正解') || kanonResponse.includes('真相') && !isGiveup && (kanonResponse.includes('【はい】') || kanonResponse.includes('おめでとう'));
+      const isCorrect = kanonResponse.includes('正解') || kanonResponse.includes('大正解') || (kanonResponse.includes('真相') && !isGiveup && (kanonResponse.includes('【はい】') || kanonResponse.includes('おめでとう')));
 
       if (isGiveup) {
         this.triggerCelebration(false);
@@ -728,11 +715,11 @@ class KasuUmigameApp {
    */
   checkKeywordSuccess(text, problem) {
     const t = text.toLowerCase();
-    if (problem.id === 1 && (t.includes('ブレーカー') || t.includes('物理') && t.includes('ハート'))) return true;
-    if (problem.id === 2 && (t.includes('太陽') && t.includes('誤認') || t.includes('セーフモード'))) return true;
-    if (problem.id === 3 && (t.includes('tシャツ') && t.includes('顔') || t.includes('顔認識') && t.includes('フリーズ'))) return true;
+    if (problem.id === 1 && (t.includes('ブレーカー') || (t.includes('物理') && t.includes('ハート')))) return true;
+    if (problem.id === 2 && ((t.includes('太陽') && t.includes('誤認')) || t.includes('セーフモード'))) return true;
+    if (problem.id === 3 && ((t.includes('tシャツ') && t.includes('顔')) || (t.includes('顔認識') && t.includes('フリーズ')))) return true;
     if (problem.id === 4 && (t.includes('2進数') || t.includes('バイナリ') || t.includes('10000000'))) return true;
-    if (problem.id === 5 && (t.includes('チャック') || t.includes('ドアノブ') && t.includes('髪'))) return true;
+    if (problem.id === 5 && (t.includes('チャック') || (t.includes('ドアノブ') && t.includes('髪')))) return true;
     if (problem.id === 6 && (t.includes('鏡') || t.includes('パノラマ') || t.includes('増殖') || t.includes('合成'))) return true;
     if (problem.id === 7 && (t.includes('クーラー') || t.includes('冷却') || t.includes('凍結') || t.includes('水冷'))) return true;
     if (problem.id === 8 && (t.includes('静電気') || t.includes('タイマー') || t.includes('ショート') || t.includes('0秒'))) return true;
@@ -786,6 +773,9 @@ class KasuUmigameApp {
     this.dom.modalTruthText.innerHTML = `
       <div style="font-weight: 800; color: var(--text-pink); margin-bottom: 6px;">【問題の真相】</div>
       <div>${problem.truth}</div>
+      <div style="margin-top: 12px; font-size: 0.85rem; color: var(--accent-cyan);">
+        🎵 ヒントソング: <strong>${problem.songTitle}</strong>
+      </div>
     `;
 
     this.dom.modal.classList.add('show');
@@ -795,10 +785,10 @@ class KasuUmigameApp {
    * 各種イベントリスナーの設定
    */
   setupEventListeners() {
-    // 音声トグルボタン
-    if (this.dom.btnVoiceToggle) {
-      this.dom.btnVoiceToggle.addEventListener('click', () => {
-        this.toggleVoice();
+    // 🎵 BGM切り替えボタン
+    if (this.dom.btnMusicToggle) {
+      this.dom.btnMusicToggle.addEventListener('click', () => {
+        this.toggleMusic();
       });
     }
 
@@ -823,13 +813,12 @@ class KasuUmigameApp {
       const problem = this.problems[this.currentProblemIndex];
       const text = `**【${problem.title}】**\n\n${problem.question}\n\n質問待ってるよ〜💗`;
       this.appendMessage('kanon', text);
-      this.speakText(text);
     });
 
     // リセットボタン
     this.dom.btnResetChat.addEventListener('click', () => {
       if (confirm('この問題のチャット履歴をリセットしますか？')) {
-        this.loadProblem(this.currentProblemIndex);
+        this.loadProblem(this.currentProblemIndex, this.isMusicPlaying);
       }
     });
 
@@ -847,7 +836,7 @@ class KasuUmigameApp {
     this.dom.modalNextBtn.addEventListener('click', () => {
       this.dom.modal.classList.remove('show');
       const nextIdx = (this.currentProblemIndex + 1) % this.problems.length;
-      this.loadProblem(nextIdx);
+      this.loadProblem(nextIdx, this.isMusicPlaying);
     });
   }
 }
